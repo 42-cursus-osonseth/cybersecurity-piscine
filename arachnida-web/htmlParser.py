@@ -1,16 +1,27 @@
 from html.parser import HTMLParser
 import os
 import requests
+from requests.models import Response
 
 
 class MyHTMLParser(HTMLParser):
 
-    def __init__(self, download_folder, url, level = 0, *, convert_charrefs=True):
+    def __init__(self, args, *, convert_charrefs=True):
         super().__init__(convert_charrefs=convert_charrefs)
-        print(f"url = {url} level = {level}")
-        self.images = []
-        self.download_path = download_folder if download_folder else "data"
-        os.makedirs(self.download_path, exist_ok=True)
+        try:
+            self.images = []
+            print(args)
+            self.download_path = args["p"] if args["p"] else "data"
+            self.url = args["url"]
+            self.recursive = args["r"]
+            self.limit = args["l"] if args["l"] else 5
+            self.page = self.get_html_page(self.url)
+            print(f"RECURSIVITE = {self.recursive}")
+            print(f"LIMIT = {self.limit}")
+            os.makedirs(self.download_path, exist_ok=True)
+        except Exception as e:
+            print(f"Error fetching page: {e}")
+            exit(1)
 
     def handle_starttag(self, tag, attrs):
         if tag == "img":
@@ -18,19 +29,21 @@ class MyHTMLParser(HTMLParser):
                 if name == "src":
                     self.images.append(value)
 
-    def handle_endtag(self, tag):
-        # print("Encountered an end tag :")
-        pass
+    def get_html_page(self, path: str) -> Response:
+        page = requests.get(path, headers={"User-Agent": "Mozilla/5.0"})
+        return page
 
-    def handle_data(self, data):
-        # print("Encountered some data  :")
-        pass
+    def execute(self):
+        self.feed(self.page.text)
+        self.Filter_images_by_extensions()
+        self.download_the_images_from_the_current_page()
+        if self.recursive and self.limit > 0:
+            print("prout")
+
 
     def Filter_images_by_extensions(self):
         extensions = (".jpg", ".jpeg", ".png", ".gif", ".bmp")
-        self.images = [
-            url for url in self.images if url.lower().endswith(extensions)
-        ]
+        self.images = [url for url in self.images if url.lower().endswith(extensions)]
 
     def download_the_images_from_the_current_page(self):
         for i, url in enumerate(self.images):
@@ -38,8 +51,6 @@ class MyHTMLParser(HTMLParser):
                 self.images[i], headers={"User-Agent": "Mozilla/5.0"}
             ).content
             ext = os.path.splitext(url)[1]
-            filename = open(f"img{i}.{ext}", "wb")
+            filename = open(f"{self.download_path}/img{i}.{ext}", "wb")
             filename.write(data)
             filename.close()
-
-

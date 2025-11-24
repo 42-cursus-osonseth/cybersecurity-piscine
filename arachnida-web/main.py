@@ -1,44 +1,48 @@
 import argparse
-import os
 from htmlParser import MyHTMLParser
-from request import get_html_page
 
 
-def create_download_folder(path: str) -> str:
-    if path:
-        os.makedirs(path, exist_ok=True)
-        return path
-    else:
-        os.makedirs("data", exist_ok=True)
-        return "data"
+def check_limit(value):
+    try:
+        v = int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(
+            "-l must be an integer between 0 and 5"
+            )
+    if v < 0 or v > 5:
+        raise argparse.ArgumentTypeError("-l must be between 0 and 5")
+    return v
 
 
 def argsParser() -> list:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-l")
-    parser.add_argument("-r", action="store_true")
-    parser.add_argument("-p")
-    parser.add_argument("url")
-    args = parser.parse_args()
-    args = vars(args)
-    if args["l"] is not None and not args["r"]:
-        parser.error("-l can only be used if -r is present.")
-    return args
+
+    try:
+        parser = argparse.ArgumentParser()
+        parser.add_argument(
+            "-l",
+            type=check_limit,
+            nargs="?",
+            const=5,
+            default=None,
+            help="-l between 0 and 5 (default: 5 if provided without value)",
+        )
+        parser.add_argument("-r", action="store_true")
+        parser.add_argument("-p")
+        parser.add_argument("url")
+        args = parser.parse_args()
+        args = vars(args)
+        if args["l"] is not None and not args["r"]:
+            parser.error("-l can only be used if -r is present.")
+        return args
+    except Exception as Error:
+        print(Error)
+        exit(1)
 
 
 def main():
     args = argsParser()
-    print(args)
-    level = 0
-    if (args["r"]):
-        print("prout lvl")
-        level = int(args["l"])
-        print (level)
-    page = get_html_page(args["url"])
-    html_parser = MyHTMLParser(args["p"], args["url"], level)
-    html_parser.feed(page.text)
-    html_parser.Filter_images_by_extensions()
-    html_parser.download_the_images_from_the_current_page()
+    html_parser = MyHTMLParser(args)
+    html_parser.execute()
 
 
 if __name__ == "__main__":
