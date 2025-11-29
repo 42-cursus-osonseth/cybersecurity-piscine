@@ -40,10 +40,12 @@ def argsParser() -> list:
 
 
 def main():
-    args = argsParser()
-    html_parser = MyHTMLParser(args)
-    html_parser.execute()
-
+    try:
+        args = argsParser()
+        html_parser = MyHTMLParser(args)
+        html_parser.execute()
+    except Exception as e:
+        print(e)
 
 if __name__ == "__main__":
     main()
