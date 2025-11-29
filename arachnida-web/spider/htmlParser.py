@@ -50,9 +50,7 @@ class MyHTMLParser(HTMLParser):
 
     def get_html_page(self, path: str) -> Response:
         try:
-            page = requests.get(
-                path, headers={"User-Agent": "Mozilla/5.0"}, timeout=5
-                )
+            page = requests.get(path, headers={"User-Agent": "Mozilla/5.0"}, timeout=5)
             page.raise_for_status()
             return page
         except Exception as e:
@@ -67,7 +65,7 @@ class MyHTMLParser(HTMLParser):
             self.feed(self.page.text)
             self.download_the_images_from_the_current_page()
         except Exception as e:
-            raise 
+            raise e
         if self.recursive and self.limit > 0:
             self.recursive_download(self.limit)
 
@@ -78,16 +76,13 @@ class MyHTMLParser(HTMLParser):
                 continue
             self.downloaded.add(url)
             if url.startswith("http"):
-                data = requests.get(
-                    url, headers={"User-Agent": "Mozilla/5.0"}
-                    ).content
+                data = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}).content
                 ext = os.path.splitext(url)[1][:4]
                 if ext and ext.endswith(ext_accepted):
                     safe_url = self.sanitize_filename(url)[:85]
                     filename = (
-                        f"{self.download_path}/img_{safe_url}_"
-                        f"{self.count}_{i}{ext}"
-                        )
+                        f"{self.download_path}/img_{safe_url}_" f"{self.count}_{i}{ext}"
+                    )
                     with open(filename, "wb") as f:
                         f.write(data)
                     self.count += 1

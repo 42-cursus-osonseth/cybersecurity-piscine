@@ -6,9 +6,7 @@ def check_limit(value):
     try:
         v = int(value)
     except ValueError:
-        raise argparse.ArgumentTypeError(
-            "-l must be an integer between 0 and 5"
-            )
+        raise argparse.ArgumentTypeError("-l must be an integer between 0 and 5")
     if v < 0 or v > 5:
         raise argparse.ArgumentTypeError("-l must be between 0 and 5")
     return v
@@ -46,6 +44,7 @@ def main():
         html_parser.execute()
     except Exception as e:
         print(e)
+
 
 if __name__ == "__main__":
     main()
