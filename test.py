@@ -6,7 +6,7 @@ import argparse
 import requests
 from urllib.parse import urljoin
 
-EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".bmp"]
+EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg"]
 
 
 def argsParser() -> list:
@@ -49,16 +49,32 @@ def create_download_directory(path: str) -> None:
         raise Error
 
 
-def get_images_source(soup: BeautifulSoup) -> list:
-    images = [img.get("src") for img in soup.find_all("img") if img.get("src")]
+def resolve_images_src(tag: Tag, url: str) -> str | None:
+    src = tag.get("src")
+    if not src or src.startswith("data:"):
+        return None
+    if src.startswith("http"):
+        return src
+    elif src.startswith("//"):
+        return "https:" + src
+    else:
+        return urljoin(url, src)
+
+
+def get_images_source(soup: BeautifulSoup, url: str) -> list:
+    images = [
+        img_url
+        for img in soup.find_all("img")
+        if (img_url := resolve_images_src(img, url)) is not None
+    ]
     return images
 
 
-
-def resolve_full_url(url: str, href: str)-> str:
+def resolve_full_url(href: str, url: str) -> str:
     if not href.startswith("http"):
         return urljoin(url, href)
     return href
+
 
 def clean_href(tag: Tag) -> str | None:
     href = tag.get("href")
@@ -66,26 +82,32 @@ def clean_href(tag: Tag) -> str | None:
         return href
     return None
 
-def get_links_in_page(args: dict, soup: BeautifulSoup) -> list:
-    links = [resolve_full_url(args["url"], href)
-            for href in map(clean_href, soup.find_all("a"))
-            if href is not None]
+
+def get_links_in_page(soup: BeautifulSoup, url: str) -> list:
+    links = [
+        resolve_full_url(href, url)
+        for href in map(clean_href, soup.find_all("a"))
+        if href is not None
+    ]
     return links
+
+def download_imgs_from_current_page(img_src: list)->None:
+
+
 
 def main():
 
     try:
         args = argsParser()
-        print(args["url"])
         create_download_directory(args["path"])
         page_content = fetch_content_page(args["url"])
         soup = BeautifulSoup(page_content, "html.parser")
-        # imgs = get_images_source(soup)
-        links = get_links_in_page(args, soup)
+        imgs = get_images_source(soup, args["url"])
+        links = get_links_in_page(soup, args["url"])
 
-        for link in links:
-            print(link)
-        print("----------------------------------------------------------")
+        # for link in links:
+        #     print(link)
+        # print("----------------------------------------------------------")
         # for img in imgs:
         #     print(img)
     except Exception as Error:
