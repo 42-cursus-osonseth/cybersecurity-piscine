@@ -31,6 +31,12 @@ def argsParser() -> list:
         exit(1)
 
 
+def print_links(links: list, url: str) -> None:
+    print(f"links found in the url \033[32m{url}\033[0m :")
+    for link in links:
+        print(f"\033[34m{link}\033[0m")
+
+
 def fetch_content_page(url: str) -> str:
     try:
         r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
@@ -102,6 +108,7 @@ def download_imgs_from_current_page(img_src: list, dl_path: str) -> None:
 
     for img in img_src:
         download_img(img, dl_path + "/")
+    print()
 
 
 def download_img(img_src: str, dl_path: str, downloaded: set = set()) -> None:
@@ -112,7 +119,7 @@ def download_img(img_src: str, dl_path: str, downloaded: set = set()) -> None:
     data = requests.get(img_src, headers={"User-Agent": "Mozilla/5.0"}).content
     with open(dl_path + img_name, "wb") as f:
         f.write(data)
-    print(f"{img_name} downloaded")
+    print(f"\033[33m{img_name}\033[0m downloaded")
 
 
 def run_spider(
@@ -126,9 +133,11 @@ def run_spider(
     page_content = fetch_content_page(url)
     soup = BeautifulSoup(page_content, "html.parser")
     imgs = get_images_source(soup, url)
+    print(f"start download images in the url : \033[32m{url}\033[0m")
     download_imgs_from_current_page(imgs, args["path"])
     if args["recursive"] and current_depth < args["depth"]:
         links = get_links_in_page(soup, args["url"])
+        print_links(links, url)
         for link in links:
             run_spider(link, args, current_depth + 1, visited)
 
@@ -138,7 +147,6 @@ def main():
     try:
         args = argsParser()
         create_download_directory(args["path"])
-        print(args)
         run_spider(args["url"], args)
 
     except Exception as Error:
