@@ -9,7 +9,7 @@ from urllib.parse import urljoin
 EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg"]
 
 
-def argsParser() -> list:
+def argsParser() -> dict:
 
     try:
         parser = argparse.ArgumentParser()
