@@ -1,11 +1,10 @@
 #include <stdio.h>
 #include <string.h>
 
-
 int main (void){
-    char input[16] = {};
+    char input[100] = {};
     printf("Please enter key: ");
-    scanf("%15s", input);
+    scanf("%s", input);
     if (strcmp(input, "__stack_check"))
         printf("Nope.\n");
     else
