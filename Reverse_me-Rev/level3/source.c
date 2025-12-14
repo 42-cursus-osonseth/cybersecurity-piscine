@@ -21,11 +21,11 @@ int main(void){
   printf("Please enter key: ");
   n = scanf("%s", input);
   if (n != 1)
-    printf("Nope.\n");
+    return(printf("Nope.\n"), 1);
   if (input[1] != '2')
-    printf("Nope.\n");
+    return(printf("Nope.\n"), 1);
   if (input[0] != '4')
-    printf("Nope.\n");
+    return(printf("Nope.\n"), 1);
   memset(str_to_cmp,0,9);
   str_to_cmp[0] = '*';
   buff[3] = '\0';
@@ -50,24 +50,24 @@ int main(void){
   str_to_cmp[i] = '\0';
   res = strcmp(str_to_cmp,"********");
   if (res == -2)
-    printf("Nope.\n");
+    return(printf("Nope.\n"), 1);
   else if (res == -1)
-    printf("Nope.\n");
+    return(printf("Nope.\n"), 1);
   else if (res == 0)
-    printf("Good job.\n");
+    return(printf("Good job.\n"), 0);
   else if (res == 1)
-    printf("Nope.\n");
+    return(printf("Nope.\n"), 1);
   else if (res == 2)
-    printf("Nope.\n");
+    return(printf("Nope.\n"), 1);
   else if (res == 3)
-    printf("Nope.\n");
+    return(printf("Nope.\n"), 1);
   else if (res == 4)
-    printf("Nope.\n");
+    return(printf("Nope.\n"), 1);
   else if (res == 5)
-    printf("Nope.\n");
+    return(printf("Nope.\n"), 1);
   else if (res == 0x73)
-    printf("Nope.\n");
+    return(printf("Nope.\n"), 1);
   else
-    printf("Nope.\n");
+    return(printf("Nope.\n"), 1);
   return 0;
 }
