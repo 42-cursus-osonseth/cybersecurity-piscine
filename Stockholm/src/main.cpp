@@ -8,14 +8,11 @@
 int main(int argc, char ** argv) {
 
     try{
-        Parser ps(argc, argv);
-        ps.parse();
-        Config cnf = ps.getConfig();
-        FileManager fm;
-        std::vector<fs::path> files = fm.getFilesToEncrypt();
-        for (const auto& f : files){
-            std::cout << f.string() << std::endl;
-        }
+        Parser parser(argc, argv);
+        parser.parse();
+        Config conf = parser.getConfig();
+        FileManager fileManager;
+        std::vector<fs::path> files = fileManager.getFilesToEncrypt();
         
     }
     catch (const std::exception &e){
@@ -25,5 +22,4 @@ int main(int argc, char ** argv) {
 
     return 0;
 
-   
 }

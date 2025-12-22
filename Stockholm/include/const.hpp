@@ -26,7 +26,7 @@ inline const std::vector<std::string> VALID_EXT = {
     ".doc", ".docb", ".docm", ".docx", ".dot", ".dotm", ".dotx",
     ".dwg",
     ".edb", ".eml",
-    ".fla", ".flv", ".frm",
+    ".fla", ".flv", ".frm", ".ft",
     ".gif", ".gpg",
     ".hwp",
     ".ibd", ".iso",

@@ -1,4 +1,9 @@
 #include "FileManager.hpp"
+#include "const.hpp"
+#include <algorithm>
+#include <iostream>
+#include <cstdlib>
+#include <boost/algorithm/string.hpp>
 
 FileManager::FileManager()
 {
@@ -14,17 +19,23 @@ FileManager::FileManager()
 
 
 }
-std::vector<fs::path> FileManager::getFilesToEncrypt(){
+
+FileManager::~FileManager()
+{
+}
+
+std::vector<fs::path> FileManager::getFilesToEncrypt() const{
 
     std::vector<fs::path> files;
     for (const auto& entry : fs::recursive_directory_iterator(_targetFolder, fs::directory_options::skip_permission_denied)) {
-    if (entry.is_regular_file()) {
+    if (entry.is_regular_file() && isValidExtension(entry.path().extension().string())) {
         files.push_back(entry.path());
         }
     }
     return files;
 }
 
-FileManager::~FileManager()
-{
+bool FileManager::isValidExtension(std::string path) const {
+    boost::algorithm::to_lower(path);
+    return std::any_of(VALID_EXT.begin(), VALID_EXT.end(), [&](const std::string& ext){ return path == ext; });
 }
