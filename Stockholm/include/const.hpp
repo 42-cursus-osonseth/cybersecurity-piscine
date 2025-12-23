@@ -2,7 +2,12 @@
 
 #include <string>
 #include <vector>
+#include <ios>
+#include <sodium.h>
 
+inline constexpr auto SYMMETRIC_KEY_SIZE = crypto_secretbox_KEYBYTES;
+inline constexpr auto HEX_SYMMETRIC_KEY_SIZE = SYMMETRIC_KEY_SIZE * 2 + 1;
+inline constexpr auto BIN = std::ios::binary;
 inline const std::string VERSION = "Version: 1.0";
 inline const std::string HELP = R"(
 Usage: stockholm [OPTIONS]

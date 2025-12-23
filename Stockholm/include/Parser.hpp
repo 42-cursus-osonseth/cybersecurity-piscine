@@ -8,13 +8,14 @@
 class Parser
 {
 private:
-    std::vector<std::string> _args;
-    std::string _reverseKey;
-    std::string _unknonwFlag;
     bool _reverse;
     bool _silent;
     bool _versionFlag;
     bool _helpFlag;
+    std::string _reverseKey;
+    std::vector<std::string> _args;
+    std::string _unknonwFlag;
+    
 
 public:
     Parser();

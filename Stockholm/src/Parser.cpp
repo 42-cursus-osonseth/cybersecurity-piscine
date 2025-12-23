@@ -5,15 +5,11 @@ Parser::Parser()
 {
 }
 
-Parser::Parser(int argc, char **argv)
-{
-    _versionFlag = false;
-    _helpFlag = false;
-    _unknonwFlag = "";
+Parser::Parser(int argc, char **argv) 
+        : _reverse(false), _silent(false), _versionFlag(false), _helpFlag(false),
+          _reverseKey(""), _args({}), _unknonwFlag(""){
     for (int i = 1; i < argc; i++)
-    {
         _args.push_back(argv[i]);
-    }
 }
 
 void Parser::parse()
@@ -29,30 +25,36 @@ void Parser::parse()
         else if (_args[i] == "-r" || _args[i] == "--reverse")
         {
             _reverse = true;
-            _reverseKey = _args[i + 1];
+            if (i + 1 < _args.size()){
+                _reverseKey = _args[i + 1];
+                i++;
+            }
+            else
+                throw std::runtime_error("Key required with the -r option");
         }
         else
             _unknonwFlag = _args[i];
-   
     }
     parseFlags();
 }
 
 void Parser::parseFlags() const
 {
-    if(_helpFlag){
+    if (_helpFlag)
+    {
         std::cout << HELP << std::endl;
         std::exit(0);
     }
-    else if (_versionFlag){
+    else if (_versionFlag)
+    {
         std::cout << VERSION << std::endl;
         std::exit(0);
     }
-    else if (!_unknonwFlag.empty()){
+    else if (!_unknonwFlag.empty())
+    {
         std::cout << "Error: unknown option" << _unknonwFlag << std::endl;
         std::exit(1);
     }
-
 }
 
 Config Parser::getConfig() const
