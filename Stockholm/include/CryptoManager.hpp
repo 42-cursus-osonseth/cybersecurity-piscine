@@ -4,6 +4,7 @@
 #include <vector>
 #include <FileManager.hpp>
 #include <sodium.h>
+#include <const.hpp>
 
 namespace fs = std::filesystem;
 

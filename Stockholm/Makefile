@@ -1,5 +1,5 @@
 CXX := g++
-CXXFLAGS := -std=c++17 -Wall -Wextra -Iinclude -MMD -MP
+CXXFLAGS := -std=c++17 -Wall -Wextra -Werror -Iinclude -MMD -MP
 LDFLAGS := -lsodium
 
 SRC_DIR := src
@@ -26,6 +26,9 @@ $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
 
 -include $(DEPS)
+
+key:
+	$(CXX) -std=c++17 -Wall -Wextra -Werror  asymKeygen.cpp -o keygen $(LDFLAGS)
 
 .PHONY: clean fclean re
 

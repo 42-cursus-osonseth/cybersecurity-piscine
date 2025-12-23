@@ -1,5 +1,4 @@
 #include "CryptoManager.hpp"
-#include "const.hpp"
 #include <iostream>
 
 cryptoManager::cryptoManager()
