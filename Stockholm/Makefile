@@ -9,7 +9,8 @@ BIN := stockholm
 SRCS := $(SRC_DIR)/main.cpp \
         $(SRC_DIR)/FileManager.cpp \
         $(SRC_DIR)/Parser.cpp \
-		$(SRC_DIR)/CryptoManager.cpp
+		$(SRC_DIR)/CryptoManager.cpp \
+		$(SRC_DIR)/Logs.cpp
 
 OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRCS))
 DEPS := $(OBJS:.o=.d)

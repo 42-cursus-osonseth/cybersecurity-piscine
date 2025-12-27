@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <string>
 #include <vector>
+#include <fstream>
 
 namespace fs = std::filesystem;
 
@@ -17,6 +18,10 @@ public:
     ~FileManager();
 
     std::vector<fs::path> getFilesToEncrypt() const;
+    std::ifstream openOriginalFile(fs::path path) const;
+
+    std::ofstream createEncryptedFile(fs::path &path) const;
+    void addFtExt(fs::path &path) const;
     
 };
 

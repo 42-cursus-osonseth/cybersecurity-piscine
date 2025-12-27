@@ -1,6 +1,9 @@
 #include <sodium.h>
 #include <iostream>
 
+
+#include <string.h>
+
 constexpr auto SIGN_PUB_SIZE = crypto_sign_ed25519_PUBLICKEYBYTES;
 constexpr auto SIGN_PRIV_SIZE = crypto_sign_ed25519_PUBLICKEYBYTES;
 constexpr auto ENC_PUB_SIZE = crypto_sign_ed25519_PUBLICKEYBYTES;
@@ -28,8 +31,10 @@ int main(void){
     
     sodium_bin2hex(binKeytoHex, HEX_KEY_SIZE, encrypt_public, ENC_PUB_SIZE);
     std::cout << "key public  : " << binKeytoHex << std::endl;
+    std::cout << "len = " << strlen(binKeytoHex) << std::endl;
     sodium_bin2hex(binKeytoHex, HEX_KEY_SIZE, encrypt_priv, ENC_PRIV_SIZE);
     std::cout << "key private : " << binKeytoHex << std::endl;
+    std::cout << "len = " << strlen(binKeytoHex) << std::endl;
 
     }
     catch (const std::exception &e){

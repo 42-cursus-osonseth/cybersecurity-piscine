@@ -39,3 +39,24 @@ bool FileManager::isValidExtension(std::string path) const {
     boost::algorithm::to_lower(path);
     return std::any_of(VALID_EXT.begin(), VALID_EXT.end(), [&](const std::string& ext){ return path == ext; });
 }
+
+std::ofstream FileManager::createEncryptedFile(fs::path &path) const{
+
+    path += TMP_EXT;
+    return std::ofstream (path, BIN);   
+}
+
+std::ifstream FileManager::openOriginalFile(const fs::path path) const{
+     return std::ifstream(path, BIN);
+}
+
+
+void FileManager::addFtExt(fs::path &path) const {
+    fs::path parent = path.parent_path();
+    fs::path newPath= parent /path.stem();
+  
+    if(newPath.extension() != ".ft")
+        newPath += ".ft";
+    fs::rename(path, newPath);
+}
+
