@@ -22,11 +22,9 @@ int main(int argc, char **argv)
         return 1;
     }
     try{
-
-        FileManager fileManager;
-        std::vector<fs::path> files = fileManager.getFilesToEncrypt();
-        cryptoManager crypto(conf, files);
+        cryptoManager crypto(conf, logs);
         crypto.init();
+        crypto.processFiles();
     }
     catch (const std::exception &e){
         logs.printError(e.what());

@@ -1,21 +1,30 @@
 #pragma once
 
-#include "type.hpp"
+
 #include <vector>
-#include <FileManager.hpp>
 #include <sodium.h>
-#include <const.hpp>
 #include <array>
 #include <cstdint>
+#include "FileManager.hpp"
+#include "type.hpp"
+#include "const.hpp"
+#include "Logs.hpp"
 
 namespace fs = std::filesystem;
-
 
 class cryptoManager
 {
 private:
-    Config _conf;
+    Config &_conf;
+    FileManager _filemanager;
+    Logs &_logs;
+
     std::vector<fs::path> _files;
+
+    fs::path _tmpPath;
+
+    std::ifstream _in;
+    std::ofstream _out;
 
     std::array<unsigned char, SYMMETRIC_KEY_SIZE> _symKey{};
     std::array<char, HEX_SYMMETRIC_KEY_SIZE> _hex_symKey{};
@@ -29,22 +38,27 @@ private:
 
     crypto_secretstream_xchacha20poly1305_state _state;
 
+    void encryptFiles();
+
+    bool openFileStreams(fs::path file);
     void generateSymKey();
     void encryptSymmKey();
-    void writeEncryptSymmKey(std::ofstream &out) const;
-    void writeHeader(std::ofstream &out) const;
-    void writeEncryptedData(std::ifstream &in, std::ofstream &out);
+    void writeEncryptSymmKey();
+    void writeHeader();
+    void writeEncryptedData();
 
 public:
-    cryptoManager();
-    cryptoManager(Config conf, std::vector<fs::path> files);
+    cryptoManager(Config &conf, Logs &logs);
     ~cryptoManager();
 
     void init();
+    void processFiles();
+
+
     void convertsymKeyToHex();
     void hexToBinAsymPubKey();
     void printHExsymKey();
 
-    void test();
+    void decryptFiles();
     void hexToBinPrivKey();
 };

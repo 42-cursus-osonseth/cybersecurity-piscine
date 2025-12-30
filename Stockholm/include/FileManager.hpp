@@ -17,11 +17,9 @@ public:
     FileManager();
     ~FileManager();
 
-    std::vector<fs::path> getFilesToEncrypt() const;
+    std::vector<fs::path> getTargetFiles() const;
     std::ifstream openOriginalFile(fs::path path) const;
-
-    std::ofstream createEncryptedFile(fs::path &path) const;
-    std::ofstream createPLainFile(fs::path &path) const;
+    std::ofstream createNewFile(fs::path path, fs::path &tmpPath) const;
     void addFtExt(fs::path &path) const;
     void removeFtExt(fs::path &path) const;
     

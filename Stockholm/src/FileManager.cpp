@@ -24,7 +24,7 @@ FileManager::~FileManager()
 {
 }
 
-std::vector<fs::path> FileManager::getFilesToEncrypt() const{
+std::vector<fs::path> FileManager::getTargetFiles() const{
 
     std::vector<fs::path> files;
     for (const auto& entry : fs::recursive_directory_iterator(_targetFolder, fs::directory_options::skip_permission_denied)) {
@@ -40,16 +40,13 @@ bool FileManager::isValidExtension(std::string path) const {
     return std::any_of(VALID_EXT.begin(), VALID_EXT.end(), [&](const std::string& ext){ return path == ext; });
 }
 
-std::ofstream FileManager::createEncryptedFile(fs::path &path) const{
+std::ofstream FileManager::createNewFile(fs::path path, fs::path &tmpPath) const{
 
-    path += TMP_EXT;
-    return std::ofstream (path, BIN);   
-}
-
-std::ofstream FileManager::createPLainFile(fs::path &path) const{
-
-    path += TMP_EXT;
-    return std::ofstream (path, BIN);  
+    std::cout << "path origin  = " << path << std::endl; 
+    tmpPath = path;
+    tmpPath += TMP_EXT;
+    std::cout << "fichier cree = " << tmpPath << std::endl; 
+    return std::ofstream (tmpPath, BIN);  
 }
 
 std::ifstream FileManager::openOriginalFile(const fs::path path) const{
