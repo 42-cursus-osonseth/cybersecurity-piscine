@@ -39,13 +39,24 @@ private:
     crypto_secretstream_xchacha20poly1305_state _state;
 
     void encryptFiles();
+    void decryptFiles();
 
     bool openFileStreams(fs::path file);
     void generateSymKey();
     void encryptSymmKey();
     void writeEncryptSymmKey();
+    bool initSecretStreamPush();
     void writeHeader();
     void writeEncryptedData();
+    void cryptAndWriteData(std::streamsize bytesRead);
+
+    void readEncryptedSymKey();
+    bool decryptSymKey();
+    void readSecretStreamHeader();
+    bool initSecretStreamPull();
+    void writeDecryptedData();
+    void readCryptedData();
+    bool decryptData(unsigned char &tag, unsigned long long &out_len, std::streamsize bytesRead);
 
 public:
     cryptoManager(Config &conf, Logs &logs);
@@ -59,6 +70,5 @@ public:
     void hexToBinAsymPubKey();
     void printHExsymKey();
 
-    void decryptFiles();
-    void hexToBinPrivKey();
+    void hexToBinAsymPrivKey();
 };

@@ -41,11 +41,8 @@ bool FileManager::isValidExtension(std::string path) const {
 }
 
 std::ofstream FileManager::createNewFile(fs::path path, fs::path &tmpPath) const{
-
-    std::cout << "path origin  = " << path << std::endl; 
     tmpPath = path;
     tmpPath += TMP_EXT;
-    std::cout << "fichier cree = " << tmpPath << std::endl; 
     return std::ofstream (tmpPath, BIN);  
 }
 
