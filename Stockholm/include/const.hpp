@@ -7,16 +7,18 @@
 #include <sodium/crypto_secretstream_xchacha20poly1305.h>
 
 inline constexpr auto BUFFER_SIZE = 4096;
+inline constexpr auto ENCRYPTED_BUFFER_SIZE = 4096 + crypto_secretstream_xchacha20poly1305_ABYTES;
 inline constexpr auto SYMMETRIC_KEY_SIZE = crypto_secretbox_KEYBYTES;
 inline constexpr auto HEX_SYMMETRIC_KEY_SIZE = SYMMETRIC_KEY_SIZE * 2 + 1;
 inline constexpr auto NONCE_SIZE = crypto_secretbox_NONCEBYTES;
 inline constexpr auto ASYM_KEY_SIZE = 32;
-inline constexpr auto ENCRYPTED_SYM_KEY_SIZE = crypto_box_SEALBYTES;
+inline constexpr auto ENCRYPTED_SYM_KEY_SIZE = crypto_box_SEALBYTES + SYMMETRIC_KEY_SIZE;
 inline constexpr auto HEADER_SIZE = crypto_secretstream_xchacha20poly1305_HEADERBYTES;
 inline constexpr auto STREAM_MAC_SIZE = crypto_secretstream_xchacha20poly1305_ABYTES;
+inline constexpr auto TAG_FINAL = crypto_secretstream_xchacha20poly1305_TAG_FINAL; 
 inline constexpr auto BIN = std::ios::binary;
 inline const std::string TMP_EXT = ".encryptedtmp";
-inline const std::string ASYM_KEY_PUB = "9608d4e21cb72ea22d34d89ae3bc00f9f15afea46fd909897532fa5e1238c69";
+inline const std::string ASYM_KEY_PUB = "8681dd04a8a67ba13c4df7693c3a242a3c08bb48187512096e6c1a3be97f4139";
 inline const std::string VERSION = "Version: 1.0";
 inline const std::string HELP = R"(
 Usage: stockholm [OPTIONS]

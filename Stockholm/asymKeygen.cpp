@@ -5,9 +5,9 @@
 #include <string.h>
 
 constexpr auto SIGN_PUB_SIZE = crypto_sign_ed25519_PUBLICKEYBYTES;
-constexpr auto SIGN_PRIV_SIZE = crypto_sign_ed25519_PUBLICKEYBYTES;
-constexpr auto ENC_PUB_SIZE = crypto_sign_ed25519_PUBLICKEYBYTES;
-constexpr auto ENC_PRIV_SIZE = crypto_sign_ed25519_PUBLICKEYBYTES;
+constexpr auto SIGN_PRIV_SIZE = crypto_sign_ed25519_SECRETKEYBYTES;
+constexpr auto ENC_PUB_SIZE = crypto_box_PUBLICKEYBYTES;
+constexpr auto ENC_PRIV_SIZE = crypto_box_SECRETKEYBYTES;
 constexpr auto HEX_KEY_SIZE = ENC_PRIV_SIZE * 2 + 1;
 
 int main(void){

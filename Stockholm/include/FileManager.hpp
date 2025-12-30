@@ -21,7 +21,9 @@ public:
     std::ifstream openOriginalFile(fs::path path) const;
 
     std::ofstream createEncryptedFile(fs::path &path) const;
+    std::ofstream createPLainFile(fs::path &path) const;
     void addFtExt(fs::path &path) const;
+    void removeFtExt(fs::path &path) const;
     
 };
 

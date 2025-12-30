@@ -46,6 +46,12 @@ std::ofstream FileManager::createEncryptedFile(fs::path &path) const{
     return std::ofstream (path, BIN);   
 }
 
+std::ofstream FileManager::createPLainFile(fs::path &path) const{
+
+    path += TMP_EXT;
+    return std::ofstream (path, BIN);  
+}
+
 std::ifstream FileManager::openOriginalFile(const fs::path path) const{
      return std::ifstream(path, BIN);
 }
@@ -58,5 +64,17 @@ void FileManager::addFtExt(fs::path &path) const {
     if(newPath.extension() != ".ft")
         newPath += ".ft";
     fs::rename(path, newPath);
+}
+
+void FileManager::removeFtExt(fs::path &path) const{
+    fs::path parent = path.parent_path();
+    fs::path filename = path.filename();
+    for(int i = 0; i < 2; i++)
+        filename.replace_extension();
+    if(filename.extension().empty())
+        filename.replace_extension(".ft");
+    fs::path newPath = parent / filename;
+    fs::rename(path, newPath);
+
 }
 
