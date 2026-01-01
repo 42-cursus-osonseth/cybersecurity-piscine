@@ -16,19 +16,14 @@ int main(int argc, char **argv)
         parser.parse();
         conf = parser.getConfig();
         logs.setSilent(conf.silent);
-    }
-    catch (const std::exception &e){
-        std::cerr << e.what() << std::endl;
-        return 1;
-    }
-    try{
         cryptoManager crypto(conf, logs);
         crypto.init();
         crypto.processFiles();
     }
     catch (const std::exception &e){
-        logs.printError(e.what());
+        std::cerr << e.what() << std::endl;
         return 1;
     }
+
     return 0;
 }
