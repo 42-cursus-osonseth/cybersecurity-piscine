@@ -49,6 +49,7 @@ private:
     void writeHeader();
     void writeEncryptedData();
     void cryptAndWriteData(std::streamsize bytesRead);
+    bool addFinalTag();
 
     void readEncryptedSymKey();
     bool decryptSymKey();

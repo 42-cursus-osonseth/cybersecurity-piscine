@@ -42,14 +42,37 @@ void cryptoManager::writeHeader()
 
 void cryptoManager::writeEncryptedData()
 {
+    _in.peek();
+    if (_in.eof())
+        addFinalTag();
     while (_in)
     {
         _in.read(reinterpret_cast<char *>(_buffer.data()), _buffer.size());
         std::streamsize bytesRead = _in.gcount();
         if (bytesRead > 0)
             cryptAndWriteData(bytesRead);
-    }
+    }    
 }
+bool cryptoManager::addFinalTag()
+{
+    unsigned long long clen;
+    std::vector<unsigned char> finalBuffer(STREAM_MAC_SIZE);
+
+    if (crypto_secretstream_xchacha20poly1305_push(
+            &_state,
+            finalBuffer.data(), &clen,
+            nullptr, 0,
+            nullptr, 0,
+            TAG_FINAL) != 0)
+        return (_logs.printError("Failed to write final tag"), false);
+
+    _out.write(reinterpret_cast<char *>(finalBuffer.data()), clen);
+    if (_out.bad())
+        return (_logs.printError("Write final tag failed"), false);
+
+    return true;
+}
+
 void cryptoManager::cryptAndWriteData(std::streamsize bytesRead)
 {
     unsigned long long clen;
