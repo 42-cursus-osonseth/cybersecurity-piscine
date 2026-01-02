@@ -41,15 +41,15 @@ private:
     void encryptFiles();
     void decryptFiles();
 
-    bool openFileStreams(fs::path file);
+    void openFileStreams(fs::path file);
     void generateSymKey();
     void encryptSymmKey();
     void writeEncryptSymmKey();
-    bool initSecretStreamPush();
+    void initSecretStreamPush();
     void writeHeader();
     void writeEncryptedData();
     void cryptAndWriteData(std::streamsize bytesRead);
-    bool addFinalTag();
+    void addFinalTag();
 
     void readEncryptedSymKey();
     bool decryptSymKey();

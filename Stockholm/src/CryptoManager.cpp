@@ -3,7 +3,7 @@
 #include <iostream>
 #include <fstream>
 
-
+// Constructor - Destructor
 cryptoManager::~cryptoManager()
 {
 }
@@ -11,6 +11,58 @@ cryptoManager::cryptoManager(Config &conf, Logs &logs) : _conf(conf), _logs(logs
 {
     _buffer.resize(BUFFER_SIZE);
     _files = _filemanager.getTargetFiles();
+}
+// Initializes libsodium
+void cryptoManager::init()
+{
+    if (sodium_init() < 0)
+        throw(std::runtime_error("Lipsodium initialization failed"));
+}
+// Call encryption or decryption depending on configuration
+void cryptoManager::processFiles()
+{
+    if (_conf.reverse)
+        decryptFiles();
+    else
+        encryptFiles();
+}
+void cryptoManager::openFileStreams(fs::path file)
+{
+    _in = _filemanager.openOriginalFile(file);
+    if (!_in)
+        throw std::ios_base::failure("Failed to open: " + file.filename().string());
+    _out = _filemanager.createNewFile(file, _tmpPath);
+    if (!_out)
+        throw std::ios_base::failure("Creation of the new file failed for file: " + file.filename().string());
+}
+
+/**********************************************************
+ *                  ENCRYPTION METHODS
+ **********************************************************/
+
+// Encrypts all target files
+void cryptoManager::encryptFiles()
+{
+    for (auto &file : _files)
+    {
+        try
+        {
+            openFileStreams(file);
+            generateSymKey();
+            encryptSymmKey();
+            writeEncryptSymmKey();
+            initSecretStreamPush();
+            writeHeader();
+            writeEncryptedData();
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << e.what() << std::endl;
+            continue;
+        }
+        fs::remove(file);
+        _filemanager.addFtExt(_tmpPath);
+    }
 }
 
 void cryptoManager::generateSymKey()
@@ -20,24 +72,31 @@ void cryptoManager::generateSymKey()
 void cryptoManager::encryptSymmKey()
 {
     hexToBinAsymPubKey();
-    crypto_box_seal(_symKeyEncrypted.data(), _symKey.data(), _symKey.size(), _asymKeyPub.data());
+    if (crypto_box_seal(_symKeyEncrypted.data(), _symKey.data(), _symKey.size(), _asymKeyPub.data()) != 0)
+        throw std::runtime_error("Failed to encrypt symmetric key");
+}
+void cryptoManager::hexToBinAsymPubKey()
+{
+    if (sodium_hex2bin(_asymKeyPub.data(), _asymKeyPub.size(), ASYM_KEY_PUB.c_str(), ASYM_KEY_PUB.size(), nullptr, nullptr, nullptr) != 0)
+        throw std::runtime_error("hexToBinAsymPubKey failed: invalid hex string or conversion impossible");
 }
 
 void cryptoManager::writeEncryptSymmKey()
 {
-    _out.write(reinterpret_cast<const char *>(_symKeyEncrypted.data()), _symKeyEncrypted.size());
+    if (!_out.write(reinterpret_cast<const char *>(_symKeyEncrypted.data()), _symKeyEncrypted.size()))
+        throw std::ios_base::failure("Write encrypted key failed");
 }
 
-bool cryptoManager::initSecretStreamPush()
+void cryptoManager::initSecretStreamPush()
 {
     if (crypto_secretstream_xchacha20poly1305_init_push(&_state, _header.data(), _symKey.data()) != 0)
-        return (_logs.printError("Failed to initialize XChaCha20-Poly1305 stream"), false);
-    return true;
+         throw std::runtime_error("Failed to initialize XChaCha20-Poly1305 stream");
 }
 
 void cryptoManager::writeHeader()
 {
-    _out.write(reinterpret_cast<const char *>(_header.data()), _header.size());
+   if (!_out.write(reinterpret_cast<const char *>(_header.data()), _header.size()))
+     throw std::ios_base::failure("Write secretstream header failed");
 }
 
 void cryptoManager::writeEncryptedData()
@@ -48,90 +107,56 @@ void cryptoManager::writeEncryptedData()
     while (_in)
     {
         _in.read(reinterpret_cast<char *>(_buffer.data()), _buffer.size());
+        if (_in.bad())
+            throw std::ios_base::failure("Read data in file failed");
         std::streamsize bytesRead = _in.gcount();
         if (bytesRead > 0)
             cryptAndWriteData(bytesRead);
-    }    
-}
-bool cryptoManager::addFinalTag()
-{
-    unsigned long long clen;
-    std::vector<unsigned char> finalBuffer(STREAM_MAC_SIZE);
-
-    if (crypto_secretstream_xchacha20poly1305_push(
-            &_state,
-            finalBuffer.data(), &clen,
-            nullptr, 0,
-            nullptr, 0,
-            TAG_FINAL) != 0)
-        return (_logs.printError("Failed to write final tag"), false);
-
-    _out.write(reinterpret_cast<char *>(finalBuffer.data()), clen);
-    if (_out.bad())
-        return (_logs.printError("Write final tag failed"), false);
-
-    return true;
+    }
 }
 
 void cryptoManager::cryptAndWriteData(std::streamsize bytesRead)
 {
     unsigned long long clen;
     _encryptedBuffer.resize(bytesRead + STREAM_MAC_SIZE);
-    crypto_secretstream_xchacha20poly1305_push(&_state, _encryptedBuffer.data(), &clen, _buffer.data(), bytesRead, nullptr, 0, 0);
-    _out.write(reinterpret_cast<char *>(_encryptedBuffer.data()), clen);
+    if (crypto_secretstream_xchacha20poly1305_push(&_state, _encryptedBuffer.data(), &clen, _buffer.data(), bytesRead, nullptr, 0, 0) != 0)
+        throw std::runtime_error("Encryption data block failed");
+    if (!_out.write(reinterpret_cast<char *>(_encryptedBuffer.data()), clen))
+        throw std::ios_base::failure("Write encrypted data block failed");
 }
 
-void cryptoManager::init()
+void cryptoManager::addFinalTag()
 {
-    if (sodium_init() < 0)
-        throw(std::runtime_error("Lipsodium initialization failed"));
+    unsigned long long clen;
+    std::vector<unsigned char> buff(STREAM_MAC_SIZE);
+
+    if (crypto_secretstream_xchacha20poly1305_push(&_state,buff.data(), &clen, nullptr, 0, nullptr, 0, TAG_FINAL) != 0)
+         throw std::runtime_error("secretstream_push failed while generating final tag");
+
+    if (!_out.write(reinterpret_cast<char *>(buff.data()), clen))
+        throw std::ios_base::failure("Write final tag failed");
 }
 
-void cryptoManager::processFiles()
-{
-    if (_conf.reverse)
-        decryptFiles();
-    else
-        encryptFiles();
-}
+/**********************************************************
+ *                  DECRYPTION METHODS
+ **********************************************************/
 
-void cryptoManager::encryptFiles()
-{
-    for (auto &file : _files)
-    {
-        if (!openFileStreams(file))
-            continue;
-        generateSymKey();
-        encryptSymmKey();
-        writeEncryptSymmKey();
-        if (!initSecretStreamPush())
-            continue;
-        writeHeader();
-        writeEncryptedData();
-        fs::remove(file);
-        _filemanager.addFtExt(_tmpPath);
-    }
-}
-
-bool cryptoManager::openFileStreams(fs::path file)
-{
-    _in = _filemanager.openOriginalFile(file);
-    if (!_in)
-        return (_logs.printError("Failed to open: " + file.filename().string()), false);
-    _out = _filemanager.createNewFile(file, _tmpPath);
-    if (!_out)
-        return (_logs.printError("Creation of the new file failed for file: " + file.filename().string()), false);
-    return true;
-}
-
+// Decrypts all target files
 void cryptoManager::decryptFiles()
 {
     hexToBinAsymPrivKey();
     hexToBinAsymPubKey();
     for (auto &file : _files)
     {
-        if (!openFileStreams(file))
+        try
+        {
+            openFileStreams(file);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << e.what() << std::endl;
             continue;
+        }
         readEncryptedSymKey();
         if (!decryptSymKey())
             continue;
@@ -199,10 +224,9 @@ bool cryptoManager::decryptData(unsigned char &tag, unsigned long long &out_len,
     return true;
 }
 
-
 void cryptoManager::hexToBinAsymPrivKey()
 {
-  
+
     if (sodium_hex2bin(
             _asymKeyPriv.data(),
             _asymKeyPriv.size(),
@@ -214,20 +238,9 @@ void cryptoManager::hexToBinAsymPrivKey()
     }
     char pk_hex[crypto_box_SECRETKEYBYTES * 2 + 1];
     sodium_bin2hex(pk_hex, sizeof(pk_hex), _asymKeyPriv.data(), _asymKeyPriv.size());
-    std::cout << "Private key: " << pk_hex << std::endl;
 }
 
 void cryptoManager::convertsymKeyToHex()
 {
     sodium_bin2hex(_hex_symKey.data(), _hex_symKey.size(), _symKey.data(), _symKey.size());
-}
-
-void cryptoManager::hexToBinAsymPubKey()
-{
-    sodium_hex2bin(_asymKeyPub.data(), _asymKeyPub.size(), ASYM_KEY_PUB.c_str(), ASYM_KEY_PUB.size(), nullptr, nullptr, nullptr);
-}
-
-void cryptoManager::printHExsymKey()
-{
-    std::cout << "sym Key = " << _hex_symKey.data() << std::endl;
 }

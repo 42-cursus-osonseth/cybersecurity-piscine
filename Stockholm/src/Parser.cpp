@@ -4,6 +4,9 @@
 Parser::Parser()
 {
 }
+Parser::~Parser()
+{
+}
 
 Parser::Parser(int argc, char **argv) 
         : _reverse(false), _silent(false), _versionFlag(false), _helpFlag(false),
@@ -60,8 +63,4 @@ void Parser::parseFlags() const
 Config Parser::getConfig() const
 {
     return Config{_silent, _reverse, _reverseKey};
-}
-
-Parser::~Parser()
-{
 }
