@@ -52,12 +52,13 @@ private:
     void addFinalTag();
 
     void readEncryptedSymKey();
-    bool decryptSymKey();
+    void decryptSymKey();
     void readSecretStreamHeader();
-    bool initSecretStreamPull();
+    void initSecretStreamPull();
     void writeDecryptedData();
     void readCryptedData();
-    bool decryptData(unsigned char &tag, unsigned long long &out_len, std::streamsize bytesRead);
+    void decryptData(unsigned char &tag, unsigned long long &out_len, std::streamsize bytesRead);
+    void writeDecryptedData(unsigned long long out_len);
 
 public:
     cryptoManager(Config &conf, Logs &logs);

@@ -90,13 +90,13 @@ void cryptoManager::writeEncryptSymmKey()
 void cryptoManager::initSecretStreamPush()
 {
     if (crypto_secretstream_xchacha20poly1305_init_push(&_state, _header.data(), _symKey.data()) != 0)
-         throw std::runtime_error("Failed to initialize XChaCha20-Poly1305 stream");
+        throw std::runtime_error("Failed to initialize XChaCha20-Poly1305 stream");
 }
 
 void cryptoManager::writeHeader()
 {
-   if (!_out.write(reinterpret_cast<const char *>(_header.data()), _header.size()))
-     throw std::ios_base::failure("Write secretstream header failed");
+    if (!_out.write(reinterpret_cast<const char *>(_header.data()), _header.size()))
+        throw std::ios_base::failure("Write secretstream header failed");
 }
 
 void cryptoManager::writeEncryptedData()
@@ -130,8 +130,8 @@ void cryptoManager::addFinalTag()
     unsigned long long clen;
     std::vector<unsigned char> buff(STREAM_MAC_SIZE);
 
-    if (crypto_secretstream_xchacha20poly1305_push(&_state,buff.data(), &clen, nullptr, 0, nullptr, 0, TAG_FINAL) != 0)
-         throw std::runtime_error("secretstream_push failed while generating final tag");
+    if (crypto_secretstream_xchacha20poly1305_push(&_state, buff.data(), &clen, nullptr, 0, nullptr, 0, TAG_FINAL) != 0)
+        throw std::runtime_error("secretstream_push failed while generating final tag");
 
     if (!_out.write(reinterpret_cast<char *>(buff.data()), clen))
         throw std::ios_base::failure("Write final tag failed");
@@ -144,53 +144,64 @@ void cryptoManager::addFinalTag()
 // Decrypts all target files
 void cryptoManager::decryptFiles()
 {
-    hexToBinAsymPrivKey();
-    hexToBinAsymPubKey();
+    try
+    {
+        hexToBinAsymPrivKey();
+        hexToBinAsymPubKey();
+    }
+    catch (const std::exception &e)
+    {
+        throw;
+    }
     for (auto &file : _files)
     {
         try
         {
             openFileStreams(file);
+            readEncryptedSymKey();
+            decryptSymKey();
+            readSecretStreamHeader();
+            initSecretStreamPull();
         }
         catch (const std::exception &e)
         {
             std::cerr << e.what() << std::endl;
             continue;
         }
-        readEncryptedSymKey();
-        if (!decryptSymKey())
-            continue;
-        readSecretStreamHeader();
-        if (!initSecretStreamPull())
-            continue;
         writeDecryptedData();
         fs::remove(file);
         _filemanager.removeFtExt(_tmpPath);
     }
 }
+void cryptoManager::hexToBinAsymPrivKey()
+{
+    if (sodium_hex2bin(_asymKeyPriv.data(), _asymKeyPriv.size(), _conf.reverseKey.c_str(), _conf.reverseKey.size(), nullptr, nullptr, nullptr) != 0)
+        throw std::runtime_error("hexToBinAsymPrivKey failed: invalid hex string or conversion impossible");
+}
 
 void cryptoManager::readEncryptedSymKey()
 {
     _in.read(reinterpret_cast<char *>(_symKeyEncrypted.data()), _symKeyEncrypted.size());
+    if (_in.bad())
+        throw std::ios_base::failure("Read encrypted sym key in file failed");
 }
-bool cryptoManager::decryptSymKey()
+void cryptoManager::decryptSymKey()
 {
-    if (crypto_box_seal_open(_symKey.data(), _symKeyEncrypted.data(), _symKeyEncrypted.size(),
-                             _asymKeyPub.data(), _asymKeyPriv.data()) != 0)
-        return (_logs.printError("Failed to decrypt symmetric key"), false);
-    return true;
+    if (crypto_box_seal_open(_symKey.data(), _symKeyEncrypted.data(), _symKeyEncrypted.size(), _asymKeyPub.data(), _asymKeyPriv.data()) != 0)
+        throw std::runtime_error("Failed to decrypt sym key");
 }
 
 void cryptoManager::readSecretStreamHeader()
 {
     _in.read(reinterpret_cast<char *>(_header.data()), _header.size());
+    if (_in.bad())
+        throw std::ios_base::failure("Read secretstream header in file failed");
 }
 
-bool cryptoManager::initSecretStreamPull()
+void cryptoManager::initSecretStreamPull()
 {
     if (crypto_secretstream_xchacha20poly1305_init_pull(&_state, _header.data(), _symKey.data()) != 0)
-        return (_logs.printError("Invalid key or header"), false);
-    return true;
+        throw std::runtime_error("InitSecretStreamPull failed: Invalid key or header");
 }
 
 void cryptoManager::writeDecryptedData()
@@ -201,43 +212,41 @@ void cryptoManager::writeDecryptedData()
 
     while (_in)
     {
-        readCryptedData();
-        std::streamsize bytesRead = _in.gcount();
-        if (bytesRead > 0 && !decryptData(tag, out_len, bytesRead))
+        try
+        {
+            readCryptedData();
+            std::streamsize bytesRead = _in.gcount();
+            if (bytesRead > 0){
+                decryptData(tag, out_len, bytesRead);
+                writeDecryptedData(out_len);
+            }
+            if (tag == TAG_FINAL)
             break;
-        _out.write(reinterpret_cast<char *>(_buffer.data()), out_len);
-        if (tag == TAG_FINAL)
-            break;
+        }
+        catch (const std::exception &e)
+        {
+            throw;
+        }
+       
     }
 }
 
 void cryptoManager::readCryptedData()
 {
     _in.read(reinterpret_cast<char *>(_encryptedBuffer.data()), _encryptedBuffer.size());
+    if (_in.bad())
+        throw std::ios_base::failure("Read crypted data block in file failed");
 }
 
-bool cryptoManager::decryptData(unsigned char &tag, unsigned long long &out_len, std::streamsize bytesRead)
+void cryptoManager::decryptData(unsigned char &tag, unsigned long long &out_len, std::streamsize bytesRead)
 {
-    if (crypto_secretstream_xchacha20poly1305_pull(&_state, _buffer.data(), &out_len,
-                                                   &tag, _encryptedBuffer.data(), bytesRead, nullptr, 0) != 0)
-        return (_logs.printError("Data decryption failed"), false);
-    return true;
+    if (crypto_secretstream_xchacha20poly1305_pull(&_state, _buffer.data(), &out_len, &tag, _encryptedBuffer.data(), bytesRead, nullptr, 0) != 0)
+        throw std::runtime_error("Data block decryption failed");
 }
 
-void cryptoManager::hexToBinAsymPrivKey()
-{
-
-    if (sodium_hex2bin(
-            _asymKeyPriv.data(),
-            _asymKeyPriv.size(),
-            _conf.reverseKey.c_str(),
-            _conf.reverseKey.size(),
-            nullptr, nullptr, nullptr) != 0)
-    {
-        std::cerr << "Invalid hex private key" << std::endl;
-    }
-    char pk_hex[crypto_box_SECRETKEYBYTES * 2 + 1];
-    sodium_bin2hex(pk_hex, sizeof(pk_hex), _asymKeyPriv.data(), _asymKeyPriv.size());
+void cryptoManager::writeDecryptedData( unsigned long long out_len){
+     if (!_out.write(reinterpret_cast<char *>(_buffer.data()), out_len))
+         throw std::ios_base::failure("Write decrypted data block in file failed");
 }
 
 void cryptoManager::convertsymKeyToHex()
