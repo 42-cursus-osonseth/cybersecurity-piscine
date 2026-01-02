@@ -91,6 +91,7 @@ void cryptoManager::initSecretStreamPush()
 {
     if (crypto_secretstream_xchacha20poly1305_init_push(&_state, _header.data(), _symKey.data()) != 0)
         throw std::runtime_error("Failed to initialize XChaCha20-Poly1305 stream");
+    sodium_memzero(_symKey.data(), _symKey.size());
 }
 
 void cryptoManager::writeHeader()
@@ -172,6 +173,7 @@ void cryptoManager::decryptFiles()
         fs::remove(file);
         _filemanager.removeFtExt(_tmpPath);
     }
+    sodium_memzero(_asymKeyPriv.data(), _asymKeyPriv.size());
 }
 void cryptoManager::hexToBinAsymPrivKey()
 {
@@ -202,6 +204,7 @@ void cryptoManager::initSecretStreamPull()
 {
     if (crypto_secretstream_xchacha20poly1305_init_pull(&_state, _header.data(), _symKey.data()) != 0)
         throw std::runtime_error("InitSecretStreamPull failed: Invalid key or header");
+    sodium_memzero(_symKey.data(), _symKey.size());
 }
 
 void cryptoManager::writeDecryptedData()
@@ -247,9 +250,4 @@ void cryptoManager::decryptData(unsigned char &tag, unsigned long long &out_len,
 void cryptoManager::writeDecryptedData( unsigned long long out_len){
      if (!_out.write(reinterpret_cast<char *>(_buffer.data()), out_len))
          throw std::ios_base::failure("Write decrypted data block in file failed");
-}
-
-void cryptoManager::convertsymKeyToHex()
-{
-    sodium_bin2hex(_hex_symKey.data(), _hex_symKey.size(), _symKey.data(), _symKey.size());
 }
