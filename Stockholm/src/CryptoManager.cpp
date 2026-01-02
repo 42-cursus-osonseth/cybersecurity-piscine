@@ -43,10 +43,12 @@ void cryptoManager::openFileStreams(fs::path file)
 // Encrypts all target files
 void cryptoManager::encryptFiles()
 {
+    _logs.startEncryption();
     for (auto &file : _files)
     {
         try
         {
+            _logs.fileToProcess(file);
             openFileStreams(file);
             generateSymKey();
             encryptSymmKey();
@@ -60,6 +62,7 @@ void cryptoManager::encryptFiles()
             std::cerr << e.what() << std::endl;
             continue;
         }
+        _logs.successfullyEncrypted(file);
         fs::remove(file);
         _filemanager.addFtExt(_tmpPath);
     }
@@ -154,10 +157,12 @@ void cryptoManager::decryptFiles()
     {
         throw;
     }
+     _logs.startDecryption();
     for (auto &file : _files)
     {
         try
         {
+            _logs.fileToProcess(file);
             openFileStreams(file);
             readEncryptedSymKey();
             decryptSymKey();
@@ -170,6 +175,7 @@ void cryptoManager::decryptFiles()
             continue;
         }
         writeDecryptedData();
+        _logs.successfullyDecrypted(file);
         fs::remove(file);
         _filemanager.removeFtExt(_tmpPath);
     }
@@ -219,18 +225,18 @@ void cryptoManager::writeDecryptedData()
         {
             readCryptedData();
             std::streamsize bytesRead = _in.gcount();
-            if (bytesRead > 0){
+            if (bytesRead > 0)
+            {
                 decryptData(tag, out_len, bytesRead);
                 writeDecryptedData(out_len);
             }
             if (tag == TAG_FINAL)
-            break;
+                break;
         }
         catch (const std::exception &e)
         {
             throw;
         }
-       
     }
 }
 
@@ -247,7 +253,8 @@ void cryptoManager::decryptData(unsigned char &tag, unsigned long long &out_len,
         throw std::runtime_error("Data block decryption failed");
 }
 
-void cryptoManager::writeDecryptedData( unsigned long long out_len){
-     if (!_out.write(reinterpret_cast<char *>(_buffer.data()), out_len))
-         throw std::ios_base::failure("Write decrypted data block in file failed");
+void cryptoManager::writeDecryptedData(unsigned long long out_len)
+{
+    if (!_out.write(reinterpret_cast<char *>(_buffer.data()), out_len))
+        throw std::ios_base::failure("Write decrypted data block in file failed");
 }
