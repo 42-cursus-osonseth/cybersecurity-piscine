@@ -69,10 +69,10 @@ bool is_valid_ipv4(const char *ip)
 
 void args_to_bin(char **argv, t_network_data *nwdata)
 {
-    ip_str_to_bin(argv[1], nwdata, IP_SRC);
-    mac_str_to_bin(argv[2], nwdata, MAC_SRC);
-    ip_str_to_bin(argv[3], nwdata, IP_TARGET);
-    mac_str_to_bin(argv[4], nwdata, MAC_TARGET);
+    ip_str_to_bin(argv[1], nwdata, IP_SERVER);
+    mac_str_to_bin(argv[2], nwdata, MAC_SERVER);
+    ip_str_to_bin(argv[3], nwdata, IP_CLIENT);
+    mac_str_to_bin(argv[4], nwdata, MAC_CLIENT);
 }
 
 void mac_str_to_bin(const char *mac_str,  t_network_data *nwdata, int code)
@@ -91,10 +91,10 @@ void mac_str_to_bin(const char *mac_str,  t_network_data *nwdata, int code)
     buff[3] = (unsigned char)d;
     buff[4] = (unsigned char)e;
     buff[5] = (unsigned char)f;
-    if (code == MAC_TARGET)
-        memcpy(nwdata->mac_dst, buff, MAC_SIZE);
+    if (code == MAC_CLIENT)
+        memcpy(nwdata->mac_client, buff, MAC_SIZE);
     else
-        memcpy(nwdata->mac_src, buff, MAC_SIZE);
+        memcpy(nwdata->mac_server, buff, MAC_SIZE);
 }
 
 void ip_str_to_bin(const char *ip_str, t_network_data *nwdata, int code){
@@ -112,10 +112,10 @@ void ip_str_to_bin(const char *ip_str, t_network_data *nwdata, int code){
     buff[2] = (unsigned char)c;
     buff[3] = (unsigned char)d;
 
-    if (code == IP_TARGET)
-        memcpy(nwdata->ip_dst, buff, IP_SIZE);
-    else if (code == IP_SRC)
-        memcpy(nwdata->ip_src, buff, IP_SIZE);
+    if (code == IP_CLIENT)
+        memcpy(nwdata->ip_client, buff, IP_SIZE);
+    else if (code == IP_SERVER)
+        memcpy(nwdata->ip_server, buff, IP_SIZE);
     else
         memcpy(nwdata->ip_local, buff, IP_SIZE);
 
