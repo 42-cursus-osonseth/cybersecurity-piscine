@@ -11,6 +11,7 @@ extern const unsigned char ETH_HEADER_SIZE;
 extern const unsigned char OPCODE_SIZE;
 extern const unsigned char HW_ETH_SIZE;
 extern const unsigned char PROTOCOL_TYPE_SIZE;
+extern const unsigned char ETH_BUFFER_SIZE_MIN;
 
 extern const unsigned char ARP_HARDWARE_TYPE_OFFSET;
 extern const unsigned char ARP_PROTOCOL_TYPE_OFFSET;

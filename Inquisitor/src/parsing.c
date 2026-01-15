@@ -133,7 +133,7 @@ void get_local_mac()
     if (ioctl(s, SIOCGIFFLAGS, &ifr) == 0)
     {
         if (ioctl(s, SIOCGIFHWADDR, &ifr) == 0)
-            memcpy(nwdata.mac_local, ifr.ifr_hwaddr.sa_data, 6);
+            memcpy(nwdata.mac_local, ifr.ifr_hwaddr.sa_data, MAC_SIZE);
         close(s);
     }
 }

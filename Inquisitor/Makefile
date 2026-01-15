@@ -2,7 +2,7 @@ CC 			 = cc
 FLAGS 		 = -Wall -Wextra -Werror -MMD -MP -g
 INCLUDEPATH  = ./includes/
 SRCPATH 	 = ./src/
-SRCNAME 	 = main.c print_func.c parsing.c buffer_build.c
+SRCNAME 	 = main.c print_func.c parsing.c buffer_build.c raw_socket.c signal_handle.c
 SRC			 = $(addprefix $(SRCPATH), $(SRCNAME))
 NAME 		 = Inquisitor
 OBJ 		 = $(SRC:.c=.o)
