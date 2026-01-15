@@ -1,7 +1,7 @@
 #pragma once
 
 extern const unsigned char ETH_TYPE_ARP[2];
-extern const unsigned char ETH_PROTOCOL_IPV4[2];
+extern const unsigned char PROTOCOL_TYPE_IPV4[2];
 extern const unsigned char HW_ETHERNET[2];
 extern const unsigned char OPCODE_REPLY[2];
 extern const unsigned char MAC_SIZE;

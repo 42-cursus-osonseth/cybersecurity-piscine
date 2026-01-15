@@ -2,18 +2,19 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <unistd.h>   
-#include <sys/types.h>  
-#include <sys/socket.h> 
-#include <net/if.h> 
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <net/if.h>
 #include <sys/ioctl.h>
-
 
 #include "parsing.h"
 #include "constants.h"
 
+extern t_network_data nwdata;
+extern t_buffer buff;
 
-void parse_args(char **argv, t_network_data *nwdata)
+void parse_args(char **argv)
 {
 
     if (!is_valid_ipv4(argv[1]) ||
@@ -23,10 +24,9 @@ void parse_args(char **argv, t_network_data *nwdata)
     {
         exit(1);
     }
-    args_to_bin(argv, nwdata);
-    get_local_mac(nwdata);
-    ip_str_to_bin("192.168.56.12", nwdata, IP_LOCAL);
-    
+    args_to_bin(argv);
+    get_local_mac();
+    ip_str_to_bin("192.168.56.12", IP_LOCAL);
 }
 
 bool is_valid_mac(const char *str)
@@ -67,15 +67,15 @@ bool is_valid_ipv4(const char *ip)
     return true;
 }
 
-void args_to_bin(char **argv, t_network_data *nwdata)
+void args_to_bin(char **argv)
 {
-    ip_str_to_bin(argv[1], nwdata, IP_SERVER);
-    mac_str_to_bin(argv[2], nwdata, MAC_SERVER);
-    ip_str_to_bin(argv[3], nwdata, IP_CLIENT);
-    mac_str_to_bin(argv[4], nwdata, MAC_CLIENT);
+    ip_str_to_bin(argv[1], IP_SERVER);
+    mac_str_to_bin(argv[2], MAC_SERVER);
+    ip_str_to_bin(argv[3], IP_CLIENT);
+    mac_str_to_bin(argv[4], MAC_CLIENT);
 }
 
-void mac_str_to_bin(const char *mac_str,  t_network_data *nwdata, int code)
+void mac_str_to_bin(const char *mac_str, int code)
 {
     unsigned char buff[MAC_SIZE];
     unsigned int a, b, c, d, e, f;
@@ -92,12 +92,13 @@ void mac_str_to_bin(const char *mac_str,  t_network_data *nwdata, int code)
     buff[4] = (unsigned char)e;
     buff[5] = (unsigned char)f;
     if (code == MAC_CLIENT)
-        memcpy(nwdata->mac_client, buff, MAC_SIZE);
+        memcpy(nwdata.mac_client, buff, MAC_SIZE);
     else
-        memcpy(nwdata->mac_server, buff, MAC_SIZE);
+        memcpy(nwdata.mac_server, buff, MAC_SIZE);
 }
 
-void ip_str_to_bin(const char *ip_str, t_network_data *nwdata, int code){
+void ip_str_to_bin(const char *ip_str, int code)
+{
 
     unsigned char buff[IP_SIZE];
     unsigned int a, b, c, d;
@@ -113,26 +114,26 @@ void ip_str_to_bin(const char *ip_str, t_network_data *nwdata, int code){
     buff[3] = (unsigned char)d;
 
     if (code == IP_CLIENT)
-        memcpy(nwdata->ip_client, buff, IP_SIZE);
+        memcpy(nwdata.ip_client, buff, IP_SIZE);
     else if (code == IP_SERVER)
-        memcpy(nwdata->ip_server, buff, IP_SIZE);
+        memcpy(nwdata.ip_server, buff, IP_SIZE);
     else
-        memcpy(nwdata->ip_local, buff, IP_SIZE);
-
+        memcpy(nwdata.ip_local, buff, IP_SIZE);
 }
 
-void get_local_mac(t_network_data *nwdata){
-    
+void get_local_mac()
+{
+
     int s;
     struct ifreq ifr;
     s = socket(AF_INET, SOCK_DGRAM, 0);
-    if(s==-1)
-      exit(1);
-    snprintf(ifr.ifr_name, IFNAMSIZ-1, "%s", "enp0s8" );
-    if (ioctl(s, SIOCGIFFLAGS, &ifr)==0) {
-      if (ioctl(s, SIOCGIFHWADDR, &ifr) == 0)
-        memcpy( nwdata->mac_local, ifr.ifr_hwaddr.sa_data, 6);
-    close(s);
-}
-
+    if (s == -1)
+        exit(1);
+    snprintf(ifr.ifr_name, IFNAMSIZ - 1, "%s", "enp0s8");
+    if (ioctl(s, SIOCGIFFLAGS, &ifr) == 0)
+    {
+        if (ioctl(s, SIOCGIFHWADDR, &ifr) == 0)
+            memcpy(nwdata.mac_local, ifr.ifr_hwaddr.sa_data, 6);
+        close(s);
+    }
 }

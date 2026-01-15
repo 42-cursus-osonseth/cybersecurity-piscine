@@ -6,6 +6,7 @@
 #include "print_func.h"
 #include "constants.h"
 #include "parsing.h"
+#include "buffer_build.h"
 
 const unsigned char ETH_TYPE_ARP[2] = {0x08, 0x06};
 const unsigned char PROTOCOL_TYPE_IPV4[2] = {0x08, 0x00};
@@ -29,10 +30,8 @@ const unsigned char ARP_SENDER_IP_OFFSET = ETH_HEADER_SIZE + 14;
 const unsigned char ARP_TARGET_MAC_OFFSET = ETH_HEADER_SIZE + 18;
 const unsigned char ARP_TARGET_IP_OFFSET = ETH_HEADER_SIZE + 24;
 
-
-
-
-unsigned char buff[60] = {0};
+t_network_data nwdata = {0};
+t_buffer buff = {0};
 
 //----------------------------------------------------------
 #include <sys/socket.h>
@@ -48,53 +47,17 @@ unsigned char buff[60] = {0};
 #include <stdio.h>
 #include <stdint.h>
 
-void build_buffer_for_client(t_network_data *nwdata, t_buffer *buff){
 
-    memcpy(&buff->to_client[0], nwdata->mac_client, MAC_SIZE);
-    memcpy(&buff->to_client[MAC_SIZE], nwdata->mac_local, MAC_SIZE);
-    memcpy(&buff->to_client[MAC_SIZE * 2], ETH_TYPE_ARP, ETH_TYPE_SIZE);
-    memcpy(&buff->to_client[ARP_HARDWARE_TYPE_OFFSET], HW_ETHERNET, HW_ETH_SIZE);
-    memcpy(&buff->to_client[ARP_PROTOCOL_TYPE_OFFSET], PROTOCOL_TYPE_IPV4, PROTOCOL_TYPE_SIZE);
-    buff->to_client[ARP_HARDWARE_SIZE_OFFSET] = MAC_SIZE;
-    buff->to_client[ARP_PROTOCOL_SIZE_OFFSET] = IP_SIZE;
-    memcpy(&buff->to_client[ARP_OPCODE_OFFSET], OPCODE_REPLY, OPCODE_SIZE);
-    memcpy(&buff->to_client[ARP_SENDER_MAC_OFFSET], nwdata->mac_local, MAC_SIZE);
-    memcpy(&buff->to_client[ARP_SENDER_IP_OFFSET], nwdata->ip_server, IP_SIZE);
-    memcpy(&buff->to_client[ARP_TARGET_MAC_OFFSET], nwdata->mac_client, MAC_SIZE);
-    memcpy(&buff->to_client[ARP_TARGET_IP_OFFSET], nwdata->ip_client, IP_SIZE);
-
-}
-void build_buffer_for_server(t_network_data *nwdata, t_buffer *buff){
-    memcpy(&buff->to_server[0], nwdata->mac_server, MAC_SIZE);
-    memcpy(&buff->to_server[MAC_SIZE], nwdata->mac_local, MAC_SIZE);
-    memcpy(&buff->to_server[MAC_SIZE * 2], ETH_TYPE_ARP, ETH_TYPE_SIZE);
-    memcpy(&buff->to_server[ARP_HARDWARE_TYPE_OFFSET], HW_ETHERNET, HW_ETH_SIZE);
-    memcpy(&buff->to_server[ARP_PROTOCOL_TYPE_OFFSET], PROTOCOL_TYPE_IPV4, PROTOCOL_TYPE_SIZE);
-    buff->to_server[ARP_HARDWARE_SIZE_OFFSET] = MAC_SIZE;
-    buff->to_server[ARP_PROTOCOL_SIZE_OFFSET] = IP_SIZE;
-    memcpy(&buff->to_server[ARP_OPCODE_OFFSET], OPCODE_REPLY, OPCODE_SIZE);
-    memcpy(&buff->to_server[ARP_SENDER_MAC_OFFSET], nwdata->mac_local, MAC_SIZE);
-    memcpy(&buff->to_server[ARP_SENDER_IP_OFFSET], nwdata->ip_client, IP_SIZE);
-    memcpy(&buff->to_server[ARP_TARGET_MAC_OFFSET], nwdata->mac_server, MAC_SIZE);
-    memcpy(&buff->to_server[ARP_TARGET_IP_OFFSET], nwdata->ip_server, IP_SIZE);
-
-}
-void build_buffers(t_network_data *nwdata, t_buffer *buff)
-{
-    build_buffer_for_client(nwdata, buff);
-    build_buffer_for_server(nwdata, buff);
-}
 
 int main(int argc, char **argv)
 {
     if (argc != 5)
         return (fprintf(stderr, "The program must have 4 arguments\n"));
 
-    t_network_data nwdata = {0};
-    t_buffer buff = {0};
+    parse_args(argv);
+    build_buffers();
 
-    parse_args(argv, &nwdata);
-    build_buffers(&nwdata, &buff);
+
     printf("---------CLIENT----------------");
     print_arp_frame(buff.to_client);
     printf("-------------------------------");
