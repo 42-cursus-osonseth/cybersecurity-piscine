@@ -1,6 +1,8 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
+#include <unistd.h>
 
 #include "signal_handle.h"
 #include "constants.h"
@@ -9,11 +11,13 @@
 
 extern t_network_data nwdata;
 extern t_buffer buff;
-
+extern volatile sig_atomic_t running;
 
 void sigint_handler(int signal)
 {
     (void) signal;
+    running = false;
+    sleep(1);
     memcpy(&buff.to_client[MAC_SIZE], nwdata.mac_server, MAC_SIZE);
     memcpy(&buff.to_client[ARP_SENDER_MAC_OFFSET], nwdata.mac_server, MAC_SIZE);
     memcpy(&buff.to_client[ARP_TARGET_IP_OFFSET], nwdata.ip_server, IP_SIZE);

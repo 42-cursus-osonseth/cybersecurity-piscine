@@ -1,5 +1,8 @@
 #include <stdio.h> // sscanf, printf, fprintf
 #include <unistd.h>
+#include <pthread.h>
+#include <signal.h>
+
 
 #include "network_types.h"
 #include "print_func.h"
@@ -34,6 +37,19 @@ const unsigned char ARP_TARGET_IP_OFFSET = ETH_HEADER_SIZE + 24;
 
 t_network_data nwdata = {0};
 t_buffer buff = {0};
+volatile sig_atomic_t running = true;
+
+void * send_arp_reply_paquet(void * arg){
+
+    (void) arg;
+    while (running)
+    {
+        send_raw_paquets();
+        sleep(2);
+    }
+    return NULL;
+
+}
 
 int main(int argc, char **argv)
 {
@@ -43,17 +59,10 @@ int main(int argc, char **argv)
     build_buffers();
     init_raw_socket_and_addr();
     setup_signal();
+    pthread_t		sender_arp_packet;
+    pthread_create(&sender_arp_packet, NULL, send_arp_reply_paquet, NULL);
 
-    while (1)
-    {
-        // printf("---------CLIENT----------------");
-        // print_arp_frame(buff.to_client);
-        // printf("-------------------------------");
-        // printf("---------SERVER----------------");
-        // print_arp_frame(buff.to_server);
-        // printf("-------------------------------");
-        send_raw_paquets();
-        sleep(2);
-    }
+    
+    
     return 0;
 }
