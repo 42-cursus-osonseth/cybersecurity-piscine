@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <pcap.h>
 
 #include "signal_handle.h"
 #include "constants.h"
@@ -11,10 +12,10 @@
 
 extern t_network_data nwdata;
 extern t_buffer buff;
+extern pcap_t *handle;
 extern volatile sig_atomic_t running;
 
-void sigint_handler(int signal)
-{
+void sigint_handler(int signal){
     (void) signal;
     running = false;
     sleep(1);
@@ -27,13 +28,11 @@ void sigint_handler(int signal)
     memcpy(&buff.to_server[ARP_TARGET_IP_OFFSET], nwdata.ip_client, IP_SIZE);
     send_raw_paquets();
     close_socket();
-    exit(0);
+    pcap_breakloop(handle);
 }
 
 void setup_signal(){
-
     struct sigaction act = {0};;
     act.sa_handler = sigint_handler;
     sigaction(SIGINT, &act, NULL);
-
 }

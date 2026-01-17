@@ -21,8 +21,8 @@ static void build_buffer_for_client(){
     memcpy(&buff.to_client[ARP_SENDER_IP_OFFSET], nwdata.ip_server, IP_SIZE);
     memcpy(&buff.to_client[ARP_TARGET_MAC_OFFSET], nwdata.mac_client, MAC_SIZE);
     memcpy(&buff.to_client[ARP_TARGET_IP_OFFSET], nwdata.ip_client, IP_SIZE);
-
 }
+
 static void build_buffer_for_server(){
     memcpy(&buff.to_server[0], nwdata.mac_server, MAC_SIZE);
     memcpy(&buff.to_server[MAC_SIZE], nwdata.mac_local, MAC_SIZE);
@@ -36,10 +36,9 @@ static void build_buffer_for_server(){
     memcpy(&buff.to_server[ARP_SENDER_IP_OFFSET], nwdata.ip_client, IP_SIZE);
     memcpy(&buff.to_server[ARP_TARGET_MAC_OFFSET], nwdata.mac_server, MAC_SIZE);
     memcpy(&buff.to_server[ARP_TARGET_IP_OFFSET], nwdata.ip_server, IP_SIZE);
-
 }
-void build_buffers()
-{
+
+void build_buffers(){
     build_buffer_for_client();
     build_buffer_for_server();
 }

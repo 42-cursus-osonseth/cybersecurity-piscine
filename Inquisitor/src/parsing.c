@@ -14,8 +14,7 @@
 extern t_network_data nwdata;
 extern t_buffer buff;
 
-void parse_args(char **argv)
-{
+void parse_args(char **argv){
 
     if (!is_valid_ipv4(argv[1]) ||
         !is_valid_mac(argv[2]) ||
@@ -29,32 +28,26 @@ void parse_args(char **argv)
     ip_str_to_bin("192.168.56.12", IP_LOCAL);
 }
 
-bool is_valid_mac(const char *str)
-{
+bool is_valid_mac(const char *str){
     if (strlen(str) != 17)
         return (fprintf(stderr, "invalid MAC address format: %s\n", str), false);
-    for (int i = 0; str[i]; i++)
-    {
+    for (int i = 0; str[i]; i++){
         if ((i - 2) % 3 == 0 ? str[i] != ':' : !isxdigit(str[i]))
             return (fprintf(stderr, "invalid MAC address format: %s\n", str), false);
     }
     return true;
 }
 
-bool is_valid_ipv4(const char *ip)
-{
-
+bool is_valid_ipv4(const char *ip){
     if (strlen(ip) < 7 || strlen(ip) > 15)
         return (fprintf(stderr, "invalid IP address format: %s\n", ip), false);
 
     int a, b, c, d;
     char extra;
-
     int n = sscanf(ip, "%d.%d.%d.%d%c", &a, &b, &c, &d, &extra);
 
     if (n != 4)
         return (fprintf(stderr, "invalid IP address format: %s\n", ip), false);
-
     if (a < 0 || a > 255)
         return (fprintf(stderr, "invalid IP address format: %s\n", ip), false);
     if (b < 0 || b > 255)
@@ -63,25 +56,21 @@ bool is_valid_ipv4(const char *ip)
         return (fprintf(stderr, "invalid IP address format: %s\n", ip), false);
     if (d < 0 || d > 255)
         return (fprintf(stderr, "invalid IP address format: %s\n", ip), false);
-
     return true;
 }
 
-void args_to_bin(char **argv)
-{
+void args_to_bin(char **argv){
     ip_str_to_bin(argv[1], IP_SERVER);
     mac_str_to_bin(argv[2], MAC_SERVER);
     ip_str_to_bin(argv[3], IP_CLIENT);
     mac_str_to_bin(argv[4], MAC_CLIENT);
 }
 
-void mac_str_to_bin(const char *mac_str, int code)
-{
+void mac_str_to_bin(const char *mac_str, int code){
     unsigned char buff[MAC_SIZE];
     unsigned int a, b, c, d, e, f;
     int n = sscanf(mac_str, "%2x:%2x:%2x:%2x:%2x:%2x", &a, &b, &c, &d, &e, &f);
-    if (n < 6)
-    {
+    if (n < 6){
         fprintf(stderr, "sscanf failed to scan mac%s\n", mac_str);
         exit(1);
     }
@@ -97,14 +86,12 @@ void mac_str_to_bin(const char *mac_str, int code)
         memcpy(nwdata.mac_server, buff, MAC_SIZE);
 }
 
-void ip_str_to_bin(const char *ip_str, int code)
-{
+void ip_str_to_bin(const char *ip_str, int code){
 
     unsigned char buff[IP_SIZE];
     unsigned int a, b, c, d;
     int n = sscanf(ip_str, "%d.%d.%d.%d", &a, &b, &c, &d);
-    if (n < 4)
-    {
+    if (n < 4){
         fprintf(stderr, "sscanf failed to scan ip%s\n", ip_str);
         exit(1);
     }
@@ -121,17 +108,14 @@ void ip_str_to_bin(const char *ip_str, int code)
         memcpy(nwdata.ip_local, buff, IP_SIZE);
 }
 
-void get_local_mac()
-{
-
+void get_local_mac(){
     int s;
     struct ifreq ifr;
     s = socket(AF_INET, SOCK_DGRAM, 0);
     if (s == -1)
         exit(1);
     snprintf(ifr.ifr_name, IFNAMSIZ - 1, "%s", "enp0s8");
-    if (ioctl(s, SIOCGIFFLAGS, &ifr) == 0)
-    {
+    if (ioctl(s, SIOCGIFFLAGS, &ifr) == 0){
         if (ioctl(s, SIOCGIFHWADDR, &ifr) == 0)
             memcpy(nwdata.mac_local, ifr.ifr_hwaddr.sa_data, MAC_SIZE);
         close(s);
